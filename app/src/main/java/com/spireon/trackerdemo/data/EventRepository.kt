@@ -1,7 +1,6 @@
 package com.spireon.trackerdemo.data
 
 import androidx.annotation.WorkerThread
-import androidx.lifecycle.LiveData
 import com.spireon.trackerdemo.model.Event
 
 /**
