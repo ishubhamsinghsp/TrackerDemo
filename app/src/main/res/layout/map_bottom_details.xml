@@ -1,41 +1,52 @@
 <layout>
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                  xmlns:app="http://schemas.android.com/apk/res-auto"
-                  android:id="@+id/bottomSheetLayout"
-                  android:layout_width="match_parent"
-                  android:layout_height="100dp"
-                  app:behavior_peekHeight="100dp"
-                  android:elevation="8dp"
-                  android:padding="2dp"
-                  android:gravity="center_vertical"
-                  android:background="#ffffff"
-                  app:layout_behavior="@string/bottom_sheet_behavior"
-                  android:orientation="vertical">
+    <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+                                       xmlns:app="http://schemas.android.com/apk/res-auto"
+                                       android:id="@+id/bottomSheetLayout"
+                                       android:layout_width="match_parent"
+                                       android:layout_height="120dp"
+                                       app:behavior_peekHeight="100dp"
+                                       app:cardElevation="16dp"
+                                       app:contentPadding="8dp"
+                                       android:gravity="center_vertical"
+                                       app:layout_behavior="@string/bottom_sheet_behavior"
+                                       app:cardCornerRadius="16dp"
+                                       >
+
+        <LinearLayout android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:orientation="vertical"
+        >
+
 
         <TextView android:id="@+id/tv_location"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:textStyle="bold"
-                  android:textSize="12sp"
+                  android:textSize="14sp"
                   android:layout_marginStart="5dp"
                   android:layout_marginEnd="5dp"
         />
 
-        <TextView android:layout_width="wrap_content"
+        <TextView android:id="@+id/tv_activity"
+                  android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:textSize="12sp"
+                  android:textSize="14sp"
+                  android:textStyle="bold"
                   android:layout_marginTop="5dp"
                   android:layout_marginStart="5dp"
                   android:layout_marginEnd="5dp"
         />
 
-        <TextView android:layout_width="wrap_content"
+        <TextView android:id="@+id/tv_confidence"
+                  android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:textSize="12sp"
+                  android:textSize="14sp"
+                  android:textStyle="bold"
                   android:layout_marginTop="5dp"
                   android:layout_marginStart="5dp"
                   android:layout_marginEnd="5dp"
         />
+        </LinearLayout>
 
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
 </layout>

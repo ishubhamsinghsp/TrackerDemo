@@ -4,6 +4,7 @@ import android.Manifest
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
@@ -28,6 +29,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import android.location.Criteria
 import android.content.Context.LOCATION_SERVICE
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -40,12 +43,15 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import java.time.Instant
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -63,6 +69,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     private var markerCount: Int = 0
     // boolean flag to toggle periodic location updates
     private var mRequestingLocationUpdates = true
+    private lateinit var broadcastReceiver: BroadcastReceiver
+    private lateinit var mLastActivity: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,10 +93,57 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
         BottomSheetBehavior.from(mBinding.llBottomInfo.bottomSheetLayout)
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//            insert(Event("START", 12.0, 33.1, Date.from(Instant.now())))
-//        }
 
+        broadcastReceiver = object :BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let {
+                    if (it.action.equals(Constants.BROADCAST_DETECTED_ACTIVITY)) {
+                        val type = it.getIntExtra("type", -1)
+                        val confidence = it.getIntExtra("confidence", 0)
+                        handleUserActivity(type, confidence)
+                    }
+                }
+            }
+
+        }
+
+        startTracking()
+
+    }
+
+    private fun storeData() {
+        if(::mLastLocation.isInitialized && ::mLastActivity.isInitialized)  {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                insert(Event(mLastActivity, mLastLocation.latitude, mLastLocation.longitude, Date.from(Instant.now())))
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun handleUserActivity(type:Int, confidence:Int) {
+
+        if(confidence > Constants.CONFIDENCE) {
+
+            when(type) {
+                DetectedActivity.IN_VEHICLE,
+                DetectedActivity.ON_BICYCLE,
+                DetectedActivity.RUNNING,
+                DetectedActivity.ON_FOOT,
+                DetectedActivity.WALKING
+                -> {
+                    mLastActivity = "MOVING"
+                    mBinding.llBottomInfo.tvActivity.text="Activity: $mLastActivity"
+                    mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                }
+                DetectedActivity.STILL,
+                DetectedActivity.UNKNOWN -> {
+                    mLastActivity = "STILL"
+                    mBinding.llBottomInfo.tvActivity.text="Activity: $mLastActivity"
+                    mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                }
+            }
+            storeData()
+        }
     }
 
     private fun getServicesAvailable(): Boolean {
@@ -174,9 +229,14 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
         getServicesAvailable()
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver,
+            IntentFilter(Constants.BROADCAST_DETECTED_ACTIVITY)
+        )
+
         // Resuming the periodic location updates
         if (mGoogleApiClient.isConnected && mRequestingLocationUpdates) {
             startLocationUpdates()
+            startTracking()
         }
     }
 
@@ -195,6 +255,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         if (mGoogleApiClient.isConnected) {
             mGoogleApiClient.disconnect()
         }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -212,6 +273,19 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         }
     }
 
+    private fun startTracking() {
+
+        val intent = Intent(this@MainActivity, BackgroundDetectedActivitiesService::class.java)
+        startService(intent)
+    }
+
+    private fun stopTracking() {
+        mLastActivity = "STILL"
+        storeData()
+        val intent = Intent(this@MainActivity, BackgroundDetectedActivitiesService::class.java)
+        stopService(intent)
+    }
+
     private fun stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this)
     }
@@ -219,6 +293,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     override fun onDestroy() {
         super.onDestroy()
         stopLocationUpdates()
+        stopTracking()
     }
 
     override fun onConnectionFailed(result: ConnectionResult) {
@@ -324,6 +399,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
                     .contains(LatLng(mLastLocation.latitude, mLastLocation.longitude))) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(LatLng(mLastLocation.latitude, mLastLocation.longitude)))
             }
+
+            storeData()
 
 
         } else {
