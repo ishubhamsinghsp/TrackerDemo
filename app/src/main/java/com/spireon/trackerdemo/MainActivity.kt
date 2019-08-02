@@ -36,13 +36,16 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.util.Log
+import android.view.View
 import android.view.animation.LinearInterpolator
+import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.*
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -79,6 +82,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
             .findFragmentById(R.id.map) as SupportMapFragment
 
         mapFragment.getMapAsync(this)
+
+        BottomSheetBehavior.from(mBinding.llBottomInfo.bottomSheetLayout)
 
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            insert(Event("START", 12.0, 33.1, Date.from(Instant.now())))
@@ -305,7 +310,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
             val latitude = mLastLocation.latitude
             val longitude = mLastLocation.longitude
-//            val loc = "$latitude ,$longitude "
+            val loc = "Location: $latitude ,$longitude "
+            mBinding.llBottomInfo.tvLocation.text = loc
 //            Toast.makeText(this, loc, Toast.LENGTH_SHORT).show()
 
             //Add pointer to the map at location
