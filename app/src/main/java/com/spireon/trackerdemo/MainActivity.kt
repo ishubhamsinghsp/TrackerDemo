@@ -195,6 +195,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         checkLocationPermissions()
+        mMap.setOnInfoWindowClickListener(this)
     }
 
     @SuppressLint("MissingPermission")
@@ -208,6 +209,11 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
     private fun stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopLocationUpdates()
     }
 
     override fun onConnectionFailed(result: ConnectionResult) {
@@ -240,7 +246,10 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
             val latlong = LatLng(lat, lon)
             mk= mMap.addMarker(MarkerOptions().position(LatLng(lat, lon))
-                    .icon(smallMarker))
+                    .title("Me")
+                    .icon(smallMarker)
+                    .flat(true)
+            )
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlong, 16f))
 
             //Set Marker Count to 1 after first marker is created
@@ -289,8 +298,10 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     private fun displayLocation() {
         if(checkLocationPermissions()) {
 
-            mLastLocation = LocationServices.FusedLocationApi
-                .getLastLocation(mGoogleApiClient)
+            if(!::mLastLocation.isInitialized) {
+                mLastLocation = LocationServices.FusedLocationApi
+                    .getLastLocation(mGoogleApiClient)
+            }
 
             val latitude = mLastLocation.latitude
             val longitude = mLastLocation.longitude
@@ -299,6 +310,14 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
             //Add pointer to the map at location
             addMarker(mMap, latitude, longitude)
+
+            //Move map if marker is out of visible window
+            if (!mMap.projection
+                    .visibleRegion
+                    .latLngBounds
+                    .contains(LatLng(mLastLocation.latitude, mLastLocation.longitude))) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(LatLng(mLastLocation.latitude, mLastLocation.longitude)))
+            }
 
 
         } else {
