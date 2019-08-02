@@ -293,7 +293,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     }
 
     private fun stopTracking() {
-        mLastActivity = "FORCE_TERM"
+        mLastActivity = "FORCE_END_TRIP"
         storeData()
         val intent = Intent(this@MainActivity, BackgroundDetectedActivitiesService::class.java)
         stopService(intent)
