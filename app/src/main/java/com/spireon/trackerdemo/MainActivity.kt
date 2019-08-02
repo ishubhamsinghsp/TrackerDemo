@@ -4,6 +4,7 @@ import android.Manifest
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.Bundle
@@ -136,12 +137,12 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
                         if (mLastActivity != "MOVING") {
                             mLastActivity = "MOVING"
                             mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
-                            mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                            storeData()
                         }
                     } else {
                         mLastActivity = "MOVING"
                         mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
-                        mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                        storeData()
                     }
                 }
                 DetectedActivity.STILL,
@@ -150,16 +151,16 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
                         if (mLastActivity != "STILL") {
                             mLastActivity = "STILL"
                             mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
-                            mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                            storeData()
                         }
                     } else {
                         mLastActivity = "STILL"
                         mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
-                        mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                        storeData()
                     }
                 }
             }
-            storeData()
+            mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
         }
     }
 
@@ -239,6 +240,13 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
     override fun onResume() {
         super.onResume()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            this.setShowWhenLocked(true)
+            this.setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        }
 
         getServicesAvailable()
 
