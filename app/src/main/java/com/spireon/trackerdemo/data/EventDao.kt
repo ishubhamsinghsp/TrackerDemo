@@ -23,4 +23,7 @@ interface EventDao {
 
     @Delete
     suspend fun delete(event: Event)
+
+    @Query("DELETE FROM event")
+    suspend fun nukeTable()
 }

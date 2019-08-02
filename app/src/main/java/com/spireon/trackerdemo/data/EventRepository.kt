@@ -28,4 +28,9 @@ class EventRepository(private val eventDao: EventDao) {
     suspend fun getAllEvents(): List<Event> {
         return eventDao.getAllEvents()
     }
+
+    @WorkerThread
+    suspend fun deleteAll() {
+        eventDao.nukeTable()
+    }
 }

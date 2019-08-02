@@ -71,6 +71,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     private var mRequestingLocationUpdates = true
     private lateinit var broadcastReceiver: BroadcastReceiver
     private lateinit var mLastActivity: String
+    private var oldLocation = LatLng(0.0,0.0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,15 +132,31 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
                 DetectedActivity.ON_FOOT,
                 DetectedActivity.WALKING
                 -> {
-                    mLastActivity = "MOVING"
-                    mBinding.llBottomInfo.tvActivity.text="Activity: $mLastActivity"
-                    mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                    if(::mLastActivity.isInitialized) {
+                        if (mLastActivity != "MOVING") {
+                            mLastActivity = "MOVING"
+                            mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                            mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                        }
+                    } else {
+                        mLastActivity = "MOVING"
+                        mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                        mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                    }
                 }
                 DetectedActivity.STILL,
                 DetectedActivity.UNKNOWN -> {
-                    mLastActivity = "STILL"
-                    mBinding.llBottomInfo.tvActivity.text="Activity: $mLastActivity"
-                    mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                    if(::mLastActivity.isInitialized) {
+                        if (mLastActivity != "STILL") {
+                            mLastActivity = "STILL"
+                            mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                            mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                        }
+                    } else {
+                        mLastActivity = "STILL"
+                        mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                        mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+                    }
                 }
             }
             storeData()
@@ -220,10 +237,6 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         repository.insert(event)
     }
 
-    fun getAllEvents(): List<Event>? = runBlocking {
-        repository.getAllEvents()
-    }
-
     override fun onResume() {
         super.onResume()
 
@@ -280,13 +293,14 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     }
 
     private fun stopTracking() {
-        mLastActivity = "STILL"
+        mLastActivity = "FORCE_TERM"
         storeData()
         val intent = Intent(this@MainActivity, BackgroundDetectedActivitiesService::class.java)
         stopService(intent)
     }
 
     private fun stopLocationUpdates() {
+        if(mGoogleApiClient.isConnected)
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this)
     }
 
@@ -383,24 +397,36 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
                     .getLastLocation(mGoogleApiClient)
             }
 
-            val latitude = mLastLocation.latitude
-            val longitude = mLastLocation.longitude
-            val loc = "Location: $latitude ,$longitude "
-            mBinding.llBottomInfo.tvLocation.text = loc
+            if(LatLng(mLastLocation.latitude, mLastLocation.longitude) != oldLocation) {
+                val latitude = mLastLocation.latitude
+                val longitude = mLastLocation.longitude
+                val loc = "Location: $latitude ,$longitude "
+                mBinding.llBottomInfo.tvLocation.text = loc
 //            Toast.makeText(this, loc, Toast.LENGTH_SHORT).show()
 
-            //Add pointer to the map at location
-            addMarker(mMap, latitude, longitude)
+                //Add pointer to the map at location
+                addMarker(mMap, latitude, longitude)
 
-            //Move map if marker is out of visible window
-            if (!mMap.projection
-                    .visibleRegion
-                    .latLngBounds
-                    .contains(LatLng(mLastLocation.latitude, mLastLocation.longitude))) {
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(LatLng(mLastLocation.latitude, mLastLocation.longitude)))
+                //Move map if marker is out of visible window
+                if (!mMap.projection
+                        .visibleRegion
+                        .latLngBounds
+                        .contains(LatLng(mLastLocation.latitude, mLastLocation.longitude))
+                ) {
+                    mMap.animateCamera(
+                        CameraUpdateFactory.newLatLng(
+                            LatLng(
+                                mLastLocation.latitude,
+                                mLastLocation.longitude
+                            )
+                        )
+                    )
+                }
+
+                storeData()
+
+                oldLocation = LatLng(mLastLocation.latitude, mLastLocation.longitude)
             }
-
-            storeData()
 
 
         } else {
