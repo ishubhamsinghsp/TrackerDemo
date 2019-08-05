@@ -143,6 +143,8 @@ GoogleApiClient.OnConnectionFailedListener{
 
         if(confidence > Constants.CONFIDENCE) {
 
+            val name = getActivityName(type)
+
             when(type) {
                 DetectedActivity.IN_VEHICLE,
                 DetectedActivity.ON_BICYCLE,
@@ -153,12 +155,12 @@ GoogleApiClient.OnConnectionFailedListener{
                     if(::mLastActivity.isInitialized) {
                         if (mLastActivity != "MOVING") {
                             mLastActivity = "MOVING"
-                            mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                            mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                             storeData()
                         }
                     } else {
                         mLastActivity = "MOVING"
-                        mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                        mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                         storeData()
                     }
                 }
@@ -167,17 +169,30 @@ GoogleApiClient.OnConnectionFailedListener{
                     if(::mLastActivity.isInitialized) {
                         if (mLastActivity != "STILL") {
                             mLastActivity = "STILL"
-                            mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                            mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                             storeData()
                         }
                     } else {
                         mLastActivity = "STILL"
-                        mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity"
+                        mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                         storeData()
                     }
                 }
             }
             mBinding.llBottomInfo.tvConfidence.text = "Confidence: $confidence"
+        }
+    }
+
+    private fun getActivityName(type: Int):String {
+        return when(type) {
+            DetectedActivity.IN_VEHICLE -> "vehicle"
+            DetectedActivity.ON_BICYCLE -> "cycle"
+            DetectedActivity.RUNNING -> "running"
+            DetectedActivity.ON_FOOT -> "foot"
+            DetectedActivity.WALKING -> "walking"
+            DetectedActivity.STILL -> "still"
+            DetectedActivity.UNKNOWN -> "unknown"
+            else -> "unknown $type"
         }
     }
 
