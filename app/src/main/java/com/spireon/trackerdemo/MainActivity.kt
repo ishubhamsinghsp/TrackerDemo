@@ -57,22 +57,23 @@ import kotlin.math.abs
 import kotlin.math.sign
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback,
-GoogleMap.OnInfoWindowClickListener, GoogleApiClient.ConnectionCallbacks,
-GoogleApiClient.OnConnectionFailedListener, LocationListener{
+GoogleMap.OnInfoWindowClickListener,
+GoogleApiClient.OnConnectionFailedListener{
 
     private lateinit var repository: EventRepository
     private lateinit var mMap: GoogleMap
     private lateinit var mBinding:ActivityMainBinding
     private lateinit var mLocationRequest: LocationRequest
-    private lateinit var mGoogleApiClient: GoogleApiClient
     private lateinit var mLastLocation: Location
-    private val TAG = ""
+    private val TAG = MainActivity::class.java.canonicalName
     private var markerCount: Int = 0
     // boolean flag to toggle periodic location updates
     private var mRequestingLocationUpdates = true
     private lateinit var broadcastReceiver: BroadcastReceiver
     private lateinit var mLastActivity: String
     private var oldLocation = LatLng(0.0,0.0)
+    private lateinit var locationCallback: LocationCallback
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,9 +81,11 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
         // Check if Google services are available
         if (getServicesAvailable()) {
-            buildGoogleApiClient()
+            initFusedLocationClient()
             createLocationRequest()
 //            Toast.makeText(this, "Google Service Is Available!!", Toast.LENGTH_SHORT).show()
+        } else {
+            finish()
         }
 
         val eventDao = AppDatabase.getDatabase(application).eventDao()
@@ -94,6 +97,16 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         mapFragment.getMapAsync(this)
 
         BottomSheetBehavior.from(mBinding.llBottomInfo.bottomSheetLayout)
+
+        locationCallback = object :LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult ?: return
+                for(location in locationResult.locations) {
+                    mLastLocation = location
+                    displayLocation()
+                }
+            }
+        }
 
 
         broadcastReceiver = object :BroadcastReceiver() {
@@ -111,6 +124,10 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
         startTracking()
 
+    }
+
+    private fun initFusedLocationClient() {
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
     private fun storeData() {
@@ -176,16 +193,6 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
             else -> Toast.makeText(this, "Cannot Connect To Play Services", Toast.LENGTH_SHORT).show()
         }
         return false
-    }
-
-    // Creating google api object
-    @Synchronized
-    private fun buildGoogleApiClient() {
-        mGoogleApiClient = GoogleApiClient.Builder(this)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .addApi(LocationServices.API)
-            .build()
     }
 
     private fun createLocationRequest() {
@@ -255,28 +262,22 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         )
 
         // Resuming the periodic location updates
-        if (mGoogleApiClient.isConnected && mRequestingLocationUpdates) {
+        if (mRequestingLocationUpdates) {
             startLocationUpdates()
             startTracking()
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-    }
-
     override fun onStart() {
         super.onStart()
-
-        mGoogleApiClient.connect()
     }
 
     override fun onStop() {
         super.onStop()
-        if (mGoogleApiClient.isConnected) {
-            mGoogleApiClient.disconnect()
-        }
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
+//        if (mGoogleApiClient.isConnected) {
+//            mGoogleApiClient.disconnect()
+//        }
+//        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -288,9 +289,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         if(checkLocationPermissions()) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, this
-            )
+            fusedLocationProviderClient.requestLocationUpdates(mLocationRequest,locationCallback, null)
         }
     }
 
@@ -308,8 +307,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
     }
 
     private fun stopLocationUpdates() {
-        if(mGoogleApiClient.isConnected)
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this)
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
 
     override fun onDestroy() {
@@ -322,15 +320,6 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = "
                 + result.errorCode
         )
-    }
-
-    override fun onConnected(p0: Bundle?) {
-        // Once connected with google api, get the location
-        displayLocation()
-
-        if (mRequestingLocationUpdates) {
-            startLocationUpdates()
-        }
     }
 
     var mk:Marker? = null
@@ -366,10 +355,6 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         }
     }
 
-    override fun onConnectionSuspended(p0: Int) {
-        mGoogleApiClient.connect()
-    }
-
     private fun getBitmapDescriptor(id:Int):BitmapDescriptor {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
          val vectorDrawable: VectorDrawable =  ContextCompat.getDrawable(this, id) as VectorDrawable
@@ -401,8 +386,9 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         if(checkLocationPermissions()) {
 
             if(!::mLastLocation.isInitialized) {
-                mLastLocation = LocationServices.FusedLocationApi
-                    .getLastLocation(mGoogleApiClient)
+                fusedLocationProviderClient.lastLocation.result?.let{
+                    mLastLocation = it
+                }
             }
 
             if(LatLng(mLastLocation.latitude, mLastLocation.longitude) != oldLocation) {
@@ -443,18 +429,6 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         }
     }
 
-    override fun onLocationChanged(location: Location) {
-        // Assign new location
-        mLastLocation = location
-
-//        Toast.makeText(
-//            applicationContext, "Location changed!",
-//            Toast.LENGTH_SHORT).show()
-
-        // Display the new location on UI
-        displayLocation()
-    }
-
     private fun computeRotation(fraction: Float, start: Float, end: Float): Float {
         val normalizeEnd = end - start // rotate start to 0
         val normalizedEndAbs = (normalizeEnd + 360) % 360
@@ -471,29 +445,29 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener{
         return (result + 360) % 360
     }
 
-        private fun animateMarker(destination:Location, marker:Marker) {
-            val startPosition: LatLng = marker.position
-            val endPosition = LatLng(destination.latitude, destination.longitude)
+    private fun animateMarker(destination:Location, marker:Marker) {
+        val startPosition: LatLng = marker.position
+        val endPosition = LatLng(destination.latitude, destination.longitude)
 
-            val startRotation: Float = marker.rotation
+        val startRotation: Float = marker.rotation
 
-            val latLngInterpolator = LatLngInterpolator.LinearFixed()
-            val valueAnimator: ValueAnimator = ValueAnimator.ofFloat(0F, 1F)
-            valueAnimator.duration = 1000 // duration 1 second
-            valueAnimator.interpolator = LinearInterpolator()
-            valueAnimator.addUpdateListener { animation ->
-                try {
-                    val v = animation.animatedFraction
-                    val newPosition = latLngInterpolator.interpolate(v, startPosition, endPosition)
-                    marker.position = newPosition
-                    marker.rotation = computeRotation(v, startRotation, destination.bearing)
-                } catch (ex: Exception) {
-                    // I don't care atm..
-                }
+        val latLngInterpolator = LatLngInterpolator.LinearFixed()
+        val valueAnimator: ValueAnimator = ValueAnimator.ofFloat(0F, 1F)
+        valueAnimator.duration = 1000 // duration 1 second
+        valueAnimator.interpolator = LinearInterpolator()
+        valueAnimator.addUpdateListener { animation ->
+            try {
+                val v = animation.animatedFraction
+                val newPosition = latLngInterpolator.interpolate(v, startPosition, endPosition)
+                marker.position = newPosition
+                marker.rotation = computeRotation(v, startRotation, destination.bearing)
+            } catch (ex: Exception) {
+                // I don't care atm..
             }
-
-            valueAnimator.start()
         }
+
+        valueAnimator.start()
+    }
 
     private interface LatLngInterpolator {
         fun interpolate(fraction: Float, a: LatLng, b: LatLng): LatLng
