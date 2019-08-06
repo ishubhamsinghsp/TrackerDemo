@@ -1,4 +1,4 @@
-package com.spireon.trackerdemo
+package com.spireon.trackerdemo.services
 
 import android.app.Service
 import android.content.Intent
@@ -7,12 +7,7 @@ import com.google.android.gms.location.ActivityRecognitionClient
 import android.app.PendingIntent
 import android.os.Binder
 import android.widget.Toast
-import androidx.annotation.NonNull
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.android.gms.tasks.Task
-
-
+import com.spireon.trackerdemo.Constants
 
 
 /**

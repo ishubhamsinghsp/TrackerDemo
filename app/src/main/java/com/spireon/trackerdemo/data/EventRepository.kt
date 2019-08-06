@@ -2,6 +2,7 @@ package com.spireon.trackerdemo.data
 
 import androidx.annotation.WorkerThread
 import com.spireon.trackerdemo.model.Event
+import java.util.*
 
 /**
  * Created by Shubham Singh on 31/7/19.
@@ -20,7 +21,7 @@ class EventRepository(private val eventDao: EventDao) {
     }
 
     @WorkerThread
-    suspend fun getEventsByDate(startTime:Long, endTime:Long): List<Event> {
+    suspend fun getEventsByDate(startTime:Date, endTime:Date): List<Event> {
         return eventDao.getEventsByTime(startTime, endTime)
     }
 

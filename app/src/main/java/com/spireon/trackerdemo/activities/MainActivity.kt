@@ -1,9 +1,8 @@
-package com.spireon.trackerdemo
+package com.spireon.trackerdemo.activities
 
 import android.Manifest
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -27,22 +26,15 @@ import com.spireon.trackerdemo.model.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import android.location.Criteria
-import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.VectorDrawable
 import android.location.Location
-import android.location.LocationManager
 import android.os.Build
 import android.util.Log
-import android.view.View
 import android.view.animation.LinearInterpolator
-import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.common.ConnectionResult
@@ -51,6 +43,9 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.spireon.trackerdemo.services.BackgroundDetectedActivitiesService
+import com.spireon.trackerdemo.Constants
+import com.spireon.trackerdemo.R
 import java.time.Instant
 import java.util.*
 import kotlin.math.abs

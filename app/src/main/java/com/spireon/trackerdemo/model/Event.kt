@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
-import com.spireon.trackerdemo.DateConverter
+import com.spireon.trackerdemo.utils.DateConverter
 import java.util.Date
 
 /**
@@ -15,9 +15,9 @@ import java.util.Date
 @TypeConverters(
     DateConverter::class)
 data class Event(
-    @ColumnInfo(name = "event") var event: String?,
-    @ColumnInfo(name = "latitude") var latitude: Double?,
-    @ColumnInfo(name = "longitude") var longitude: Double?,
+    @ColumnInfo(name = "event") var event: String,
+    @ColumnInfo(name = "latitude") var latitude: Double,
+    @ColumnInfo(name = "longitude") var longitude: Double,
     @ColumnInfo(name = "time") var time: Date
 ) {
     @PrimaryKey(autoGenerate = true) var eventId: Int = 0

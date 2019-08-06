@@ -21,18 +21,18 @@
                 android:name="com.google.android.geo.API_KEY"
                 android:value="@string/google_maps_key"/>
 
-        <activity android:name=".MainActivity" />
+        <activity android:name=".activities.MainActivity" />
 
         <!-- Service that provides activity recognition data. Setting the android:exported attribute
              to "false" stops other apps from starting this service, even when using an explicit
              intent. -->
         <service
-                android:name=".DetectedActivitiesIntentService"
+                android:name=".services.DetectedActivitiesIntentService"
                 android:exported="false" />
 
-        <service android:name=".BackgroundDetectedActivitiesService" />
+        <service android:name=".services.BackgroundDetectedActivitiesService" />
 
-        <activity android:name=".HomeActivity" >
+        <activity android:name=".activities.HomeActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -40,7 +40,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".EventListActivity" />
+        <activity android:name=".activities.EventListActivity" />
+        <activity android:name=".activities.TripsListActivity" />
     </application>
 
 </manifest>

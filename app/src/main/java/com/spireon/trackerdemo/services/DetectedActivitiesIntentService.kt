@@ -1,4 +1,4 @@
-package com.spireon.trackerdemo
+package com.spireon.trackerdemo.services
 
 import android.app.IntentService
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -6,7 +6,7 @@ import android.content.Intent
 import android.util.Log
 import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.ActivityRecognitionResult
-
+import com.spireon.trackerdemo.Constants
 
 
 /**
