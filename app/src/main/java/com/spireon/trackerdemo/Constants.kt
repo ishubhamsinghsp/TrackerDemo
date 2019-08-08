@@ -13,4 +13,10 @@ object Constants {
     const val BROADCAST_DETECTED_ACTIVITY = "activity_intent"
     const val DETECTION_INTERVAL_IN_MILLISECONDS:Long = 3000
     const val CONFIDENCE = 70
+
+    const val MOVE_START = "MOVE_START"
+    const val MOVING = "MOVING"
+    const val STILL = "STILL"
+    const val MOVE_STOP = "MOVE_STOP"
+    const val FORCE_END_TRIP = "FORCE_END_TRIP"
 }

@@ -5,6 +5,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.spireon.trackerdemo.Constants
 import com.spireon.trackerdemo.R
 import com.spireon.trackerdemo.adapter.TripAdapter
 import com.spireon.trackerdemo.data.AppDatabase
@@ -64,10 +65,9 @@ class TripsListActivity : AppCompatActivity() {
         var isStarted = false
         val tripList = ArrayList<Trip>()
         var tripEventList = ArrayList<Event>()
-        var lastMovement = Date()
         events.forEachIndexed { index, event ->
             when(event.event) {
-                "MOVING" -> {
+                Constants.MOVE_START -> {
                     if(isStarted) {
                         tripEventList.add(event)
                     } else {
@@ -75,20 +75,13 @@ class TripsListActivity : AppCompatActivity() {
                         tripEventList = ArrayList()
                         tripEventList.add(event)
                     }
-                    lastMovement = event.time
                 }
-                "STILL" -> {
+                Constants.MOVING -> {
                     if(isStarted) {
-                        if((events.size-1 == index) || (event.time.time - lastMovement.time >= 600000)) { //if its the last event or if its still for more than 10 mins end trip
-                            isStarted = false
-                            tripEventList.add(event)
-                            tripList.add(Trip(tripEventList))
-                        } else {
-                            tripEventList.add(event)
-                        }
+                        tripEventList.add(event)
                     }
                 }
-                "FORCE_END_TRIP" -> {
+                Constants.MOVE_STOP, Constants.FORCE_END_TRIP -> {
                     if(isStarted) {
                         isStarted = false
                         tripEventList.add(event)

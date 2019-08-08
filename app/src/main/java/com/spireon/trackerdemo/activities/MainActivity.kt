@@ -69,6 +69,8 @@ GoogleApiClient.OnConnectionFailedListener{
     private var oldLocation = LatLng(0.0,0.0)
     private lateinit var locationCallback: LocationCallback
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private var isStarted:Boolean = false
+    private var lastMovement = Date()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,7 +130,41 @@ GoogleApiClient.OnConnectionFailedListener{
     private fun storeData() {
         if(::mLastLocation.isInitialized && ::mLastActivity.isInitialized)  {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                insert(Event(mLastActivity, mLastLocation.latitude, mLastLocation.longitude, Date.from(Instant.now())))
+                when (mLastActivity) {
+                    Constants.MOVING -> {
+                        if(isStarted) {
+                            insert(Event(Constants.MOVING, mLastLocation.latitude, mLastLocation.longitude, Date.from(Instant.now())))
+                        } else {
+                            insert(Event(Constants.MOVE_START, mLastLocation.latitude, mLastLocation.longitude, Date.from(Instant.now())))
+                            isStarted = true
+                        }
+                    }
+
+                    Constants.STILL -> {
+                        if(isStarted) {
+                            if ((Date.from(Instant.now()).time - lastMovement.time >= 600000)) {
+                                insert(Event(Constants.MOVE_STOP, mLastLocation.latitude, mLastLocation.longitude, Date.from(Instant.now())))
+                                isStarted = false
+                            } else {
+                                insert(Event(Constants.MOVING, mLastLocation.latitude, mLastLocation.longitude, Date.from(Instant.now())))
+                            }
+                        }
+                    }
+
+                    Constants.FORCE_END_TRIP -> {
+                        if(isStarted) {
+                            insert(
+                                Event(
+                                    Constants.FORCE_END_TRIP,
+                                    mLastLocation.latitude,
+                                    mLastLocation.longitude,
+                                    Date.from(Instant.now())
+                                )
+                            )
+                            isStarted = false
+                        }
+                    }
+                }
             }
         }
     }
@@ -148,13 +184,13 @@ GoogleApiClient.OnConnectionFailedListener{
                 DetectedActivity.WALKING
                 -> {
                     if(::mLastActivity.isInitialized) {
-                        if (mLastActivity != "MOVING") {
-                            mLastActivity = "MOVING"
+                        if (mLastActivity != Constants.MOVING) {
+                            mLastActivity = Constants.MOVING
                             mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                             storeData()
                         }
                     } else {
-                        mLastActivity = "MOVING"
+                        mLastActivity = Constants.MOVING
                         mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                         storeData()
                     }
@@ -162,13 +198,13 @@ GoogleApiClient.OnConnectionFailedListener{
                 DetectedActivity.STILL,
                 DetectedActivity.UNKNOWN -> {
                     if(::mLastActivity.isInitialized) {
-                        if (mLastActivity != "STILL") {
-                            mLastActivity = "STILL"
+                        if (mLastActivity != Constants.STILL) {
+                            mLastActivity = Constants.STILL
                             mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                             storeData()
                         }
                     } else {
-                        mLastActivity = "STILL"
+                        mLastActivity = Constants.STILL
                         mBinding.llBottomInfo.tvActivity.text = "Activity: $mLastActivity ($name)"
                         storeData()
                     }
