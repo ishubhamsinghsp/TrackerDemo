@@ -19,4 +19,16 @@ object Constants {
     const val STILL = "STILL"
     const val MOVE_STOP = "MOVE_STOP"
     const val FORCE_END_TRIP = "FORCE_END_TRIP"
+
+    object ACTION {
+        const val MAIN_ACTION = "com.spireon.trackerdemo.action.main"
+        const val START_TRACKING_ACTION = "com.spireon.trackerdemo.action.start"
+        const val STOP_TRACKING_ACTION = "com.spireon.trackerdemo.action.stop"
+        const val START_SERVICE_ACTION = "com.spireon.trackerdemo.action.startservice"
+        const val STOP_SERVICE_ACTION = "com.spireon.trackerdemo.action.stopservice"
+    }
+
+    object NOTIFICATION_ID {
+        const val FOREGROUND_SERVICE = 101
+    }
 }

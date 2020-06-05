@@ -12,8 +12,23 @@
                                                    android:layout_width="wrap_content"
                                                    android:layout_height="wrap_content"
                                                    android:layout_margin="10dp"
-                                                   android:text="Start tracking"
+                                                   android:text="Start tracking service"
         />
+
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/bt_stop"
+                                                   android:layout_width="wrap_content"
+                                                   android:layout_height="wrap_content"
+                                                   android:layout_margin="10dp"
+                                                   android:text="Stop tracking service"
+        />
+
+        <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/bt_start_map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:text="Start in-app tracking"
+            />
 
         <androidx.appcompat.widget.AppCompatButton android:id="@+id/bt_event"
                                                    android:layout_width="wrap_content"

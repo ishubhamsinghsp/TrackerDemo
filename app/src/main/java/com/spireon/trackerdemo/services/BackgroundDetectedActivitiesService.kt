@@ -46,7 +46,7 @@ class BackgroundDetectedActivitiesService : Service() {
         return START_STICKY
     }
 
-    fun requestActivityUpdatesHandler() {
+    private fun requestActivityUpdatesHandler() {
         val task = mActivityRecognitionClient.requestActivityUpdates(
             Constants.DETECTION_INTERVAL_IN_MILLISECONDS,
             mPendingIntent
@@ -71,7 +71,7 @@ class BackgroundDetectedActivitiesService : Service() {
         }
     }
 
-    fun removeActivityUpdatesHandler() {
+    private fun removeActivityUpdatesHandler() {
         val task = mActivityRecognitionClient.removeActivityUpdates(
             mPendingIntent
         )
